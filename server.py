@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 import hashlib
-import jwt
-import datetime
+import JWT
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 
@@ -43,10 +43,13 @@ def login():
     password = data.get('password')
 
     if username in users and users[username] == hash_password(password):
-        token = jwt.encode({
-            'user': username,
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
-        }, 'your_secret_key', algorithm='HS256')
+        payload = {
+    "sub": password ,
+    "name": username,
+    "iat":  datetime.utcnow(), 
+    "exp":  datetime.utcnow()+ timedelta(hours=1) # set expiration to 1 hour
+}
+        token = JWT.create_jwt(payload, "your_secret_key")
         return jsonify({'token': token}), 200
 
     return jsonify({'error': 'Invalid username or password'}), 403

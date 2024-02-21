@@ -57,7 +57,7 @@ def verify_jwt(token, secret_key):
 payload = {
     "sub": "1234567890",
     "name": "John Doe",
-    "iat": datetime.utcnow(),
+    "iat": datetime.utcnow(), # issued at time
     "exp": datetime.utcnow() + timedelta(hours=1) # set expiration to 1 hour
 }
 
