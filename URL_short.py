@@ -3,10 +3,37 @@ from flask import Flask, request, jsonify
 import hashlib
 import time
 import re
+import JWT
 
 app = Flask(__name__)
 
 dict_mapping = {}
+users = {'user1': 'password1', 'user2': 'password2'}
+
+
+# def verify_jwt_in_request():
+#     """verify JWT in request header"""
+#     token = request.headers.get('Authorization', None)
+#     if not token:
+#         return False, "Missing token"
+#     try:
+#         payload = jwt.decode(token, "your_secret_key", algorithms=["HS256"])
+#         # add more verification here if needed
+#         return True, payload
+#     except jwt.ExpiredSignatureError:
+#         return False, "Token expired"
+#     except jwt.InvalidTokenError:
+#         return False, "Invalid token"
+
+# @app.route('/your-protected-route', methods=['GET', 'POST'])
+# def protected_route():
+#     """protected route"""
+#     is_valid, payload_or_error = verify_jwt_in_request()
+#     if not is_valid:
+#         return jsonify({"error": payload_or_error}), 401
+
+#     return jsonify({"message": "Success"})
+
 
 #function to generate the id for the url
 def generate_md5_identifier(url):
@@ -72,12 +99,15 @@ def get_url(id):
 #update_url function to update the url from the id
 def update_url(id):
     global dict_mapping
-    #if id is not present in the dictionary then return the error
-    # print(id)
-    if id not in dict_mapping:
-        # print(id,"id doesn't exist")
-        return "id doesn't exist", 404
-    #if id is present in the dictionary then update the url
+    token = request.headers.get('Authorization')
+    user = JWT. verify_jwt(token)
+    if not user:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    if id not in dict_mapping or dict_mapping[id]['user'] != user:
+        return jsonify({'error': 'URL not found or access denied'}), 404
+
+    #if id is present and user is authorized then update the url
     try:
         values = request.data
         values = values.decode('utf-8')
