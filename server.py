@@ -53,6 +53,16 @@ def login():
         return jsonify({'token': token}), 200
 
     return jsonify({'detail': "forbidden"}), 403
+@app.route('/check', methods=['PUT'])
+def check():
+    data = request.json
+    token = data.get('token')
+    if not JWT.verify_jwt(token):
+        return jsonify({"status": False, "user": "Unauthorized"})
+    checkusername = JWT.return_username(token)
+    if checkusername not in users:
+        return jsonify({"status": False, "user": "User not found"})
+    return jsonify({"status": True, "user": checkusername})
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001)
