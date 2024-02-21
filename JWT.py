@@ -58,7 +58,7 @@ payload = {
     "sub": "1234567890",
     "name": "John Doe",
     "iat": datetime.utcnow(),
-    "exp": datetime.utcnow() + timedelta(hours=1) # 设置1小时后过期
+    "exp": datetime.utcnow() + timedelta(hours=1) # set expiration to 1 hour
 }
 
 secret_key = "your_secret_key"
