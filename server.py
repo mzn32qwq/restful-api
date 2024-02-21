@@ -18,7 +18,7 @@ def create_user():
     password = data.get('password')
 
     if username in users:
-        return jsonify({'error': 'User already exists'}), 409
+        return jsonify({'detail': "duplicate"}), 409
 
     users[username] = hash_password(password)
     return jsonify({'message': 'User created'}), 201
@@ -31,7 +31,7 @@ def change_password():
     new_password = data.get('new_password')
 
     if username not in users or users[username] != hash_password(old_password):
-        return jsonify({'error': 'Invalid username or password'}), 403
+        return jsonify({'detail':"forbidden" }), 403
 
     users[username] = hash_password(new_password)
     return jsonify({'message': 'Password changed'}), 200
@@ -52,7 +52,8 @@ def login():
         token = JWT.create_jwt(payload, "your_secret_key")
         return jsonify({'token': token}), 200
 
-    return jsonify({'error': 'Invalid username or password'}), 403
+    return jsonify({'detail': "forbidden"}), 403
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5001)
+
