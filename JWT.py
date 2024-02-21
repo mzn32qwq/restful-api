@@ -39,7 +39,7 @@ def create_jwt(payload, secret_key):
 
     return f"{encoded_header}.{encoded_payload}.{encoded_signature}"
 
-def verify_jwt(token, secret_key):
+def verify_jwt(token):
     """verify JWT"""
     # token should have 3 parts
     parts = token.split('.')
@@ -58,6 +58,13 @@ def verify_jwt(token, secret_key):
     # compare re-created signature with encoded signature
     return decoded_signature == encoded_signature
 
+def return_username(token):
+    """return username from JWT"""
+    parts = token.split('.')
+    encoded_payload = parts[1]
+    payload = json.loads(base64_decode(encoded_payload))
+    return payload.get('name')
+
 # example usage
 payload = {
     "sub": "1234567890",
@@ -69,12 +76,12 @@ payload = {
 secret_key = "your_secret_key"
 
 # create JWT
-token = create_jwt(payload, secret_key)
-print("JWT:", token)
+# token = create_jwt(payload, secret_key)
+# print("JWT:", token)
 
-# verify JWT
-is_valid = verify_jwt(token, secret_key)
-print("Is JWT valid?", is_valid)
+# # verify JWT
+# is_valid = verify_jwt(token, secret_key)
+# print("Is JWT valid?", is_valid)
 
 
 
