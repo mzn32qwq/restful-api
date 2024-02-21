@@ -46,7 +46,7 @@ def login():
         payload = {
     "sub": password ,
     "name": username,
-    "iat":  datetime.utcnow(), 
+    "iat":  datetime.utcnow(), # issued at time
     "exp":  datetime.utcnow()+ timedelta(hours=1) # set expiration to 1 hour
 }
         token = JWT.create_jwt(payload, "your_secret_key")

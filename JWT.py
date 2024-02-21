@@ -15,6 +15,11 @@ def base64_decode(data):
 
 def create_jwt(payload, secret_key):
     """create JWT"""
+    for key, value in payload.items():
+        if isinstance(value, datetime):
+            # Convert datetime to ISO 8601 format string
+            payload[key] = value.isoformat()
+
     # create header
     header = {
         "alg": "HS256",
@@ -70,3 +75,6 @@ print("JWT:", token)
 # verify JWT
 is_valid = verify_jwt(token, secret_key)
 print("Is JWT valid?", is_valid)
+
+
+
