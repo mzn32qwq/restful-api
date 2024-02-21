@@ -69,19 +69,16 @@ def login():
 
 # check if JWT is valid and user exists
 @app.route('/check', methods=['PUT'])
-def check(token):
-    #if token is not valid then return the error
+def check():
+    data = request.json
+    token = data.get('token')
     if not JWT.verify_jwt(token):
-        return jsonify({"Status": False, "User": "Unauthorized"})
-    #if token is valid then return the user
+        return jsonify({"status": False, "user": "Unauthorized"})
     checkusername = JWT.return_username(token)
     if checkusername not in users:
-        #if user is not present then return the error
-        return jsonify({"Status": False, "User": "User not found"})
-    #if user is present then return the user
-    return jsonify({"Status": True, "User": checkusername})
-
+        return jsonify({"status": False, "user": "User not found"})
+    return jsonify({"status": True, "user": checkusername})
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5001)
 
