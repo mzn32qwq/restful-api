@@ -7,8 +7,8 @@ import random
 
 class TestApi(unittest.TestCase):
     # modify this to your local server settings
-    base_url = "http://127.0.0.1:8000"
-    auth_url = "http://127.0.0.1:8001"
+    base_url = "http://127.0.0.1:5000"
+    auth_url = "http://127.0.0.1:5001"
     end_point = "/"
     test_username = "test"
     test_password = "test"
@@ -19,7 +19,8 @@ class TestApi(unittest.TestCase):
     url_login = f"{auth_url}{end_point}{login}"
     response_create = requests.post(url_create, json={'username': test_username, 'password': test_password})
     response_login = requests.post(url_login, json={'username': test_username, 'password': test_password})
-
+    # print(response_login.content)
+    # print(type(response_login.content))
     headers = {'Authorization': json.loads(response_login.content)["token"]}
     headers_wrong = {'Authorization': 'wrong'}
 
