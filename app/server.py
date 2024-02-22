@@ -13,6 +13,7 @@ def hash_password(password):
 
 @app.route('/users', methods=['POST'])
 def create_user():
+    global users
     data = request.json
     username = data.get('username')
     password = data.get('password')
@@ -25,6 +26,7 @@ def create_user():
 
 @app.route('/users', methods=['PUT'])
 def change_password():
+    global users
     data = request.json
     username = data.get('username')
     old_password = data.get('password')

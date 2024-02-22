@@ -19,8 +19,7 @@ class TestApi(unittest.TestCase):
     url_login = f"{auth_url}{end_point}{login}"
     response_create = requests.post(url_create, json={'username': test_username, 'password': test_password})
     response_login = requests.post(url_login, json={'username': test_username, 'password': test_password})
-    # print(response_login.content)
-    # print(type(response_login.content))
+
     headers = {'Authorization': json.loads(response_login.content)["token"]}
     headers_wrong = {'Authorization': 'wrong'}
 
