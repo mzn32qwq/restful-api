@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shorten-url
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: shorten-url
+  template:
+    metadata:
+      labels:
+        app: shorten-url
+    spec:
+      containers:
+      - name: shorten-url
+        image: hazel21/web_service_group27:shorten_for_docker
+        ports:
+        - containerPort: 5000
+        volumeMounts:
+        - name: nfs-volume
+          mountPath: /auth/file
+      volumes:
+      - name: nfs-volume
+        nfs:
+          server: 145.100.135.157
+          path: /data
+          readOnly: false
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shorten-url-service
+spec:
+  type: NodePort
+  ports:
+    - port: 5000
+      targetPort: 5000
+      nodePort: 30000
+  selector:
+    app: shorten-url
+
+

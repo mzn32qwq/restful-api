@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-server
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: auth-server
+  template:
+    metadata:
+      labels:
+        app: auth-server
+    spec:
+      containers:
+      - name: auth-server
+        image: hazel21/web_service_group27:auth_for_docker
+        ports:
+        - containerPort: 5001
+        volumeMounts:
+        - name: nfs-volume
+          mountPath: /auth/file
+      volumes:
+      - name: nfs-volume
+        nfs:
+          server: 145.100.135.157
+          path: /data
+          readOnly: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+spec:
+  type: NodePort
+  ports:
+    - port: 5001
+      targetPort: 5001
+      nodePort: 30001
+  selector:
+    app: auth-server
