@@ -1,6 +1,4 @@
 import json
-
-import requests
 from flask import Flask, request, jsonify
 import hashlib
 import time
@@ -9,11 +7,24 @@ import JWT
 
 app = Flask(__name__)
 
-dict_mapping_multi_users = {'username_example':{"id":"url"}}
-auth_url = "http://127.0.0.1:5001"
-end_point = "/"
-check = "check"
-auth_check_url = f"{auth_url}{end_point}{check}"
+# dict_mapping_multi_users = {'username_example':{"id":"url"}}
+# auth_check_url = f"{auth_url}{end_point}{check}"
+
+# USER_SHORT_URL_FILE = os.getenv('USER_SHORT_URL_FILE')
+USER_SHORT_URL_FILE = "/auth/file/url_short.json"
+
+def load_url_id():
+    try:
+        with open(USER_SHORT_URL_FILE, 'r+') as file:
+            return json.load(file)
+    except FileNotFoundError:
+        return {}
+
+def save_url_id(users):
+    with open(USER_SHORT_URL_FILE, 'w') as file:
+        json.dump(users, file)
+
+dict_mapping_multi_users = load_url_id()
 
 #function to generate the id for the url
 def generate_md5_identifier(url):
@@ -36,28 +47,39 @@ def is_valid(url):
 )
     return re.match(regex, url) is not None
 
+def check(token):
+    dict_mapping_multi_users = load_url_id()
+    print(dict_mapping_multi_users)
+    if not JWT.verify_jwt(token):
+        return  False
+    checkusername = JWT.return_username(token)
+    # print(checkusername)
+    if checkusername not in dict_mapping_multi_users:
+        return  False
+    return checkusername
+
 
 @app.route('/<id>', methods=['GET'])
 #get_url function to get the url from the id
 def get_url(id):
+    global dict_mapping_multi_users
+    dict_mapping_multi_users = load_url_id()
     #if id is present in the dictionary then return the url
     start_time = time.time()
     # get token from request
     token = request.headers.get('Authorization')
     # check validity of the token and get the current username
-    response = requests.put(auth_check_url, json={"token": token})
-    response_json = response.json()
-    check_auth = response_json['status']
-    if check_auth == True:
-        user = response_json['user']
+    check_auth = check(token)
+    if check_auth != False:
+        user = check_auth
         # base on the username get dic
-        if user in dict_mapping_multi_users:
-            dict_mapping = dict_mapping_multi_users[user]
-        else:
-            dict_mapping_multi_users[user] = {}
-        if id in dict_mapping:
+        if 'short_url' not in dict_mapping_multi_users[user]:
+            dict_mapping_multi_users[user]['short_url'] = {}
+            save_url_id(dict_mapping_multi_users)
+            return "ID not found", 404
+        if id in dict_mapping_multi_users[user]['short_url']:
             data = {}
-            data["value"] = dict_mapping[id]
+            data["value"] = dict_mapping_multi_users[user]['short_url'][id]
             json_data = jsonify(data)
             # print(json_data)
             end_time = time.time()
@@ -71,7 +93,7 @@ def get_url(id):
             # Calculate elapsed time
             elapsed_time = end_time - start_time
             print("Elapsed get time: ", elapsed_time)
-            return "URL not found", 404
+            return "ID not found", 404
     else:
         return jsonify({'detail':"forbidden" }), 403
 
@@ -80,15 +102,16 @@ def get_url(id):
 #update_url function to update the url from the id
 def update_url(id):
     global dict_mapping_multi_users
+    dict_mapping_multi_users = load_url_id()
     token = request.headers.get('Authorization')
-    response = requests.put(auth_check_url, json={"token": token})
-    response_json = response.json()
-    check_auth = response_json['status']
+    check_auth = check(token)
     # if id is present and user is authorized then update the url
-    if check_auth == True:
-        user = response_json['user']
-        if user not in dict_mapping_multi_users:
-            dict_mapping_multi_users[user] = {}
+    if check_auth!= False:
+        user = check_auth
+        if 'short_url' not in dict_mapping_multi_users[user]:
+            dict_mapping_multi_users[user]['short_url'] = {}
+            save_url_id(dict_mapping_multi_users)
+            return "ID does not exist", 404
         try:
             values = request.data
             values = values.decode('utf-8')
@@ -99,13 +122,14 @@ def update_url(id):
         except KeyError:
             # print("No url provided")
             return "error", 400
-        if id not in dict_mapping_multi_users[user]:
+        if id not in dict_mapping_multi_users[user]['short_url']:
             return "ID does not exist", 404
         #if url is not valid then return the error
         if not is_valid(new_redirect_url):
             return "error", 400
         #if url is valid then update the url
-        dict_mapping_multi_users[user][id] = new_redirect_url
+        dict_mapping_multi_users[user]['short_url'][id] = new_redirect_url
+        save_url_id(dict_mapping_multi_users)
         # print(id,dict_mapping)
         return "update success", 200
     else:
@@ -116,18 +140,23 @@ def update_url(id):
 #delete_url function to delete the url from the id
 def delete_url(id):
     global dict_mapping_multi_users
+    dict_mapping_multi_users = load_url_id()
     token = request.headers.get('Authorization')
-    response = requests.put(auth_check_url, json={"token": token})
-    response_json = response.json()
-    check_auth = response_json['status']
-    if check_auth == True:
-        user = response_json['user']
-        if user not in dict_mapping_multi_users:
-            dict_mapping_multi_users[user] = {}
+    check_auth = check(token)
+    if check_auth!= False:
+        user = check_auth
+        if 'short_url' not in dict_mapping_multi_users[user]:
+            dict_mapping_multi_users[user]['short_url'] = {}
+            save_url_id(dict_mapping_multi_users)
+            return "URL deleted successfully", 204
     #if id is present in the dictionary then delete the url
-        if id in dict_mapping_multi_users[user]:
+        if id in dict_mapping_multi_users[user]['short_url']:
             # print(dict_mapping)
-            dict_mapping_multi_users[user] = {}
+            dict = dict_mapping_multi_users[user]['short_url']
+            del dict[id]
+            print(dict)
+            dict_mapping_multi_users[user]['short_url'] = dict
+            save_url_id(dict_mapping_multi_users)
             # print(dict_mapping)
             return "URL deleted successfully", 204
         #if id is not present in the dictionary then return the error
@@ -140,16 +169,18 @@ def delete_url(id):
 @app.route('/', methods=['GET'])
 #function to get all the urls
 def get_all_urls():
+    global dict_mapping_multi_users
+    dict_mapping_multi_users = load_url_id()
     token = request.headers.get('Authorization')
-    response = requests.put(auth_check_url, json={"token": token})
-    response_json = response.json()
-    check_auth = response_json['status']
+    check_auth = check(token)
     # check validity and return urls corresponding username
-    if check_auth == True:
-        user = response_json['user']
-        if user not in dict_mapping_multi_users:
-            dict_mapping_multi_users[user] = {}
-        return jsonify(dict_mapping_multi_users[user]), 200
+    if check_auth!= False:
+        user = check_auth
+        print(user,type(user))
+        if 'short_url' not in dict_mapping_multi_users[user]:
+            dict_mapping_multi_users[user]['short_url'] = {}
+            save_url_id(dict_mapping_multi_users)
+        return jsonify(dict_mapping_multi_users[user]['short_url']), 200
     else:
         return jsonify({'error': 'Unauthorized'}), 403
 
@@ -157,22 +188,25 @@ def get_all_urls():
 @app.route('/', methods=['POST'])
 #function to create the id for the url
 def create_id():
+    global dict_mapping_multi_users
+    dict_mapping_multi_users = load_url_id()
     start_time = time.time()
     data = request.json
     url_to_shorten = data.get('value')
     token = request.headers.get('Authorization')
-    response = requests.put(auth_check_url, json={"token": token})
-    response_json = response.json()
-    check_auth = response_json['status']
+    check_auth = check(token)
     #if url is valid then create the id
-    if check_auth == True:
-        user = response_json['user']
+    if check_auth!= False:
+        user = check_auth
         # if user is not exist,create a new dic for new user to store urls/ids
-        if user not in dict_mapping_multi_users:
-            dict_mapping_multi_users[user] = {}
+        if 'short_url' not in dict_mapping_multi_users[user]:
+            dict_mapping_multi_users[user]['short_url'] = {}
+            save_url_id(dict_mapping_multi_users)
+            dict_mapping_multi_users = load_url_id()
         if is_valid(url_to_shorten):
             id = generate_md5_identifier(url_to_shorten)
-            dict_mapping_multi_users[user][id] = url_to_shorten
+            dict_mapping_multi_users[user]['short_url'][id] = url_to_shorten
+            save_url_id(dict_mapping_multi_users)
             end_time = time.time()
             # Calculate elapsed time
             elapsed_time = end_time - start_time
@@ -194,22 +228,24 @@ def create_id():
 #function to delete all the urls
 def delete_all_urls():
     global dict_mapping_multi_users
+    dict_mapping_multi_users = load_url_id()
     token = request.headers.get('Authorization')
-    response = requests.put(auth_check_url, json={"token": token})
-    response_json = response.json()
-    check_auth = response_json['status']
+    check_auth = check(token)
     # check the validity and get user, only delete current user's dic of urls/ids
-    if check_auth == True:
-        user = response_json['user']
-        if user in dict_mapping_multi_users:
-            dict_mapping_multi_users[user] = {}
+    if check_auth!= False:
+        user = check_auth
+        if 'short_url' not in dict_mapping_multi_users[user]:
+            dict_mapping_multi_users[user]['short_url'] = {}
+            save_url_id(dict_mapping_multi_users)
             return "All URLs deleted", 404
         else:
-            dict_mapping_multi_users[user] = {}
+            dict_mapping_multi_users[user]['short_url'] = {}
+            save_url_id(dict_mapping_multi_users)
             return "All URLs deleted", 404
     else:
         return jsonify({'error': 'Unauthorized'}), 403
 
 
 if __name__ == '__main__':
-    app.run(debug=True,port=5000)
+    # app.run(debug=True, port=5000)
+    app.run(debug=True,port=5000,host="0.0.0.0")
