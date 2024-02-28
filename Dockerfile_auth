@@ -1,0 +1,16 @@
+FROM python:3.8-slim-buster
+
+# Set the working directory in the container to /auth
+WORKDIR /auth
+
+# Copy only jwt.py and server.py from the workload directory into the container at /auth
+COPY ./app/JWT.py ./app/server.py /auth/
+
+# Install any needed packages specified in requirements.txt
+RUN pip install Flask PyJWT requests
+
+# Make port 5001 available to the world outside this container
+EXPOSE 5001
+
+# Run auth_and_url_short.py when the container launches
+CMD ["python", "server.py"]

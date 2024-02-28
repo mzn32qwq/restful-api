@@ -1,0 +1,14 @@
+version: '3'
+services:
+  auth_server:
+    image: hazel21/web_service_group27:auth_for_docker
+    ports:
+      - "5001:5001"
+    volumes:
+      - /Users/xiongjingjing/Web_service-Assignment2:/auth/file
+  shorten_url:
+    image: hazel21/web_service_group27:shorten_for_docker
+    ports:
+      - "5000:5000"
+    volumes:
+      - /Users/xiongjingjing/Web_service-Assignment2:/auth/file

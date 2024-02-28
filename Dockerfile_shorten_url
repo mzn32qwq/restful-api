@@ -1,0 +1,16 @@
+FROM python:3.8-slim-buster
+
+# Set the working directory in the container to /shorten
+WORKDIR /shorten
+
+# Copy only jwt.py and URL_short.py from the workload directory into the container at /shorten
+COPY ./app/JWT.py ./app/URL_short.py /shorten/
+
+# Install any needed packages specified in requirements.txt
+RUN pip install Flask PyJWT requests
+
+# Make port 5001 available to the world outside this container
+EXPOSE 5000
+
+# Run URL_short.py when the container launches
+CMD ["python", "URL_short.py"]
